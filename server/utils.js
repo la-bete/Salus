@@ -2,6 +2,18 @@ const MailGen = require("mailgen");
 const nodemailer = require("nodemailer");
 const cryptoRandomString = require("crypto-random-string");
 
+// Serialises a value as a JavaScript expression that is safe to place inside
+// an inline <script>. JSON.stringify alone is not enough: "</script>" would
+// close the tag, and U+2028/U+2029 are line terminators in older JS engines.
+module.exports.serializeForScript = function(value){
+	return JSON.stringify(value === undefined ? null : value)
+		.replace(/</g, "\\u003c")
+		.replace(/>/g, "\\u003e")
+		.replace(/&/g, "\\u0026")
+		.replace(/\u2028/g, "\\u2028")
+		.replace(/\u2029/g, "\\u2029");
+};
+
 const mailTransport = nodemailer.createTransport({
 	port: 465,
 	host: process.env.MAILER_HOST,

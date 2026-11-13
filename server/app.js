@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const session = require("express-session");
 
 const router = require("./router");
+const { serializeForScript } = require("./utils");
 const setupAuth = require("./middlewares/auth.setup");
 const preAuthSetup = require("./middlewares/pre.auth");
 const postAuthSetup = require("./middlewares/post.auth");
@@ -14,6 +15,7 @@ const app = express();
 // App Configuration
 app.set("views", resolve(__dirname, "views"));
 app.set("view engine", "ejs");
+app.locals.serializeForScript = serializeForScript;
 app.set("trust proxy", Number(process.env.TRUST_PROXY_SETTING) || 0);
 
 // DB Connection Setup
