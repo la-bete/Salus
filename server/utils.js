@@ -1,5 +1,6 @@
 const MailGen = require("mailgen");
 const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 const cryptoRandomString = require("crypto-random-string");
 
 // Serialises a value as a JavaScript expression that is safe to place inside
@@ -14,6 +15,12 @@ module.exports.serializeForScript = function(value){
 		.replace(/\u2029/g, "\\u2029");
 };
 
+// Remember-me and reset tokens are stored as SHA-256 hashes; the raw token
+// only ever goes to the user (cookie or email link).
+module.exports.hashToken = function(token){
+	return crypto.createHash("sha256").update(String(token)).digest("hex");
+};
+
 const mailTransport = nodemailer.createTransport({
 	port: 465,
 	host: process.env.MAILER_HOST,
@@ -23,7 +30,7 @@ const mailTransport = nodemailer.createTransport({
 	}
 });
 
-module.exports.generatePasswordResetEmail = function(user){
+module.exports.generatePasswordResetEmail = function(user, resetToken){
     const mailGenerator = new MailGen({
         theme: process.env.PASSWORD_RESET_MAIL_THEME || "cerberus",
         product: {
@@ -49,7 +56,7 @@ module.exports.generatePasswordResetEmail = function(user){
                     fallback: true,
 					color: "#ca0a1c",
 					text: "Reset your password",
-					link: `${process.env.SITE_URL}/reset-password/${encodeURIComponent(user.resetToken)}`
+					link: `${process.env.SITE_URL}/reset-password/${encodeURIComponent(resetToken)}`
 				}
 			},
 			outro:
