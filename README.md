@@ -31,11 +31,13 @@ Live demo: [salus.labete.dev](https://salus.labete.dev)
 
 **Sign-in.** Passport handles every method. Email sign-in uses `passport-local`; Google, Facebook and Twitter use their Passport strategies under `/auth/:provider` and `/auth/:provider/redirect`. An OAuth user is looked up by provider and provider id, and created on first sign-in. An email address can only be registered with one method, so signing in with a password for an account created through Google is refused with a message saying so.
 
-**Sessions and cookies.** `express-session` keeps the Passport session in its default in-memory store, behind a cookie that expires after 30 minutes and is renewed on every request. When "remember me" is ticked, the server also generates a random token, stores it on the user and sets it as an HTTP-only cookie (7 days by default). `passport-remember-me` uses that cookie to restore the session after it has expired, issuing a fresh token each time. Logging out clears both cookies.
+**Sessions and cookies.** `express-session` keeps the Passport session in its default in-memory store, behind a cookie that expires after 30 minutes and is renewed on every request. When "remember me" is ticked, the server also generates a random token, stores its SHA-256 hash on the user and sets the raw token as an HTTP-only cookie (7 days by default). `passport-remember-me` uses that cookie to restore the session after it has expired, issuing a fresh token each time. Logging out clears both cookies.
 
-**Password reset.** `POST /reset-password` stores a random token and an expiry (6 hours by default) on the user and emails a link built with Mailgen and sent through Nodemailer over SMTP. Opening the link checks the token, immediately marks it expired so it cannot be reused, and records the email in the session; the new password is then posted to `/reset-change-password`.
+**Password reset.** `POST /reset-password` generates a random token, stores its SHA-256 hash and an expiry (6 hours by default) on the user, and emails a link containing the raw token, built with Mailgen and sent through Nodemailer over SMTP. Opening the link checks the token, immediately marks it expired so it cannot be reused, and records the email in the session; the new password is then posted to `/reset-change-password`, which clears both the stored token and the session entry so the reset cannot be repeated. Because only hashes are stored, a database leak does not expose usable remember-me or reset tokens.
 
 **Shared validation.** `shared/validators.mjs` defines the rules for name, email, password and confirm-password. The React forms use it for inline errors as the user types, and an Express middleware (`server/middlewares/validator.js`) runs the same functions on the request body, so the client and server cannot drift apart. The server middleware also replaces `req.body` with the validated, trimmed values.
+
+**Page data.** The EJS shell passes the signed-in user and any error message to the React app through an inline script. Values are serialised with `JSON.stringify` and `<`, `>`, `&`, U+2028 and U+2029 are escaped, so user-controlled text such as an OAuth display name cannot break out of the script.
 
 **Errors.** Expected failures are raised as `KnownError` with an HTTP status. The error handler returns JSON to API calls and re-renders the page with the message for browser navigations (for example an expired reset link); unexpected errors are logged and reported as a generic server error.
 
@@ -76,7 +78,7 @@ All of these are read by the server. `server/.env.example` lists them with place
 | `MONGODB_URI` | yes | | MongoDB connection string |
 | `SESSION_SECRET` | yes | | Secret used to sign the session cookie |
 | `COOKIE_NAME` | yes | | Name of the session cookie |
-| `SITE_URL` | yes | | Public base URL, used for OAuth callbacks and links in the reset email. The server fails to start without it |
+| `SITE_URL` | yes | | Public base URL, used for OAuth callbacks and links in the reset email. The server refuses to start without it |
 | `APP_NAME` | yes | | Shown as the page title and in the email footer |
 | `TRUST_PROXY_SETTING` | no | `0` | Number of proxy hops Express should trust (set to `1` behind a single reverse proxy) |
 | `REMEMBER_ME_COOKIE_NAME` | yes | | Name of the remember-me cookie |
