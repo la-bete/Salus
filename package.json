@@ -14,12 +14,12 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/La-BeTe/Salus.git"
+		"url": "git+https://github.com/la-bete/salus.git"
 	},
 	"author": "La-BeTe",
 	"license": "ISC",
 	"bugs": {
-		"url": "https://github.com/La-BeTe/Salus/issues"
+		"url": "https://github.com/la-bete/salus/issues"
 	},
-	"homepage": "https://github.com/La-BeTe/Salus#readme"
+	"homepage": "https://github.com/la-bete/salus#readme"
 }
