@@ -1,7 +1,7 @@
 {
 	"name": "salus",
 	"version": "2.0.0",
-	"description": "Salus is a simple login, signup and account page allowing Google, Facebook, Twitter and Email authentication. It also supports Forgot Password and Change Password functionalities.",
+	"description": "Full-stack authentication app: email, Google, Facebook and Twitter sign-in, remember-me sessions and emailed password reset.",
 	"main": "index.js",
 	"engines": {
 		"node": "<= 14.0.0"

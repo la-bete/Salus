@@ -1,7 +1,7 @@
 {
 	"name": "salus-server",
 	"version": "2.0.0",
-	"description": "Salus App Server",
+	"description": "Salus API server: Express and Passport authentication with MongoDB, remember-me cookies and password reset.",
 	"main": "app.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
