@@ -161,7 +161,11 @@ module.exports.changePasswordAfterReset = async function(req, res, next){
 		
 		const user = await User.findOne({ email: req.session.email });
 		user.password = await bcrypt.hash(req.body.password, 10);
+		// Clear the token and the session flag so neither can be used again
+		user.resetToken = undefined;
+		user.resetTokenExpiry = 0;
 		await user.save();
+		delete req.session.email;
 		res.json({ ok: true });
 	}catch(err){
 		next(err);
