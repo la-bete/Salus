@@ -95,7 +95,7 @@ module.exports.changePassword = async function (req, res, next) {
 		if(!isPasswordValid)
 			throw new KnownError("Your old password is incorrect", 401);
 		if(req.body.password === req.body["old-password"])
-			throw new KnownError("Your old and new password cannot be thesame", 400)
+			throw new KnownError("Your old and new password cannot be the same", 400)
 
 		const hashedPassword = await bcrypt.hash(req.body.password, 10);
 		user.password = hashedPassword;
