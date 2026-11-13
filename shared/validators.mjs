@@ -14,14 +14,14 @@ const validators = {
 		if(str.length < 8)
 			throw new Error("Password is too short, the minimum length is 8.");
 		if(/\s/.test(str))
-			throw new Error("Pasword must not contain spaces.");
+			throw new Error("Password must not contain spaces.");
 		if(
 			!/\W/.test(str) ||
 			!/[a-z]/.test(str) ||
 			!/[A-Z]/.test(str)
 		)
 			throw new Error(
-				"Pasword must contain one symbol, one lowercase and one uppercase character."
+				"Password must contain one symbol, one lowercase and one uppercase character."
 			);
 		return str;
     },
@@ -41,7 +41,7 @@ const validators = {
     },
     "confirm-password": function(str, reqBody){
         if(reqBody?.password && (str !== reqBody.password))
-            throw new Error("Password and Confirm Password fields must be thesame.");
+            throw new Error("Password and Confirm Password fields must be the same.");
         return str;
     },
 }

@@ -7,7 +7,7 @@ const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const RememberMeStrategy = require("passport-remember-me").Strategy;
 
 const User = require("../models/users");
-const { generateRandomString } = require("../utils")
+const { generateRandomString, hashToken } = require("../utils")
 
 function verifyOAuth(authType){
 	return async function(_, __, profile, done){
@@ -107,7 +107,7 @@ function setupRememberMeStrategy(){
 		{ key: process.env.REMEMBER_ME_COOKIE_NAME },
 		async function(token, done){
 			try{
-				const user = await User.findOne({ rememberMeToken: token });
+				const user = await User.findOne({ rememberMeToken: hashToken(token) });
 				if(!user) return done(null, null, {
 					message: "Invalid token passed. Please re-login"
 				});
@@ -121,7 +121,7 @@ function setupRememberMeStrategy(){
 				const rememberMeToken = generateRandomString(process.env.REMEMBER_ME_COOKIE_LENGTH);
 				await User.findOneAndUpdate(
 					{ email: user.email },
-					{ rememberMeToken }
+					{ rememberMeToken: hashToken(rememberMeToken) }
 				);
 				return done(null, rememberMeToken);
 			}catch(err){

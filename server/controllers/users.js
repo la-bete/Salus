@@ -4,6 +4,7 @@ const passport = require("passport");
 const User = require("../models/users");
 const { KnownError } = require("./errors");
 const { 
+	hashToken,
 	sendEmail,
 	generateRandomString,
 	generatePasswordResetEmail,
@@ -45,11 +46,12 @@ module.exports.logIn = function(req, res, next){
 				};
 				if(req.body["remember-me"]){
 					const userFromDB = await User.findOne({ email: user.email });
-					userFromDB.rememberMeToken = generateRandomString(process.env.REMEMBER_ME_COOKIE_LENGTH);
+					const rememberMeToken = generateRandomString(process.env.REMEMBER_ME_COOKIE_LENGTH);
+					userFromDB.rememberMeToken = hashToken(rememberMeToken);
 					await userFromDB.save();
 					res.cookie(
 						process.env.REMEMBER_ME_COOKIE_NAME,
-						userFromDB.rememberMeToken,
+						rememberMeToken,
 						{
 							path: "/",
 							httpOnly: true,
@@ -93,7 +95,7 @@ module.exports.changePassword = async function (req, res, next) {
 		if(!isPasswordValid)
 			throw new KnownError("Your old password is incorrect", 401);
 		if(req.body.password === req.body["old-password"])
-			throw new KnownError("Your old and new password cannot be thesame", 400)
+			throw new KnownError("Your old and new password cannot be the same", 400)
 
 		const hashedPassword = await bcrypt.hash(req.body.password, 10);
 		user.password = hashedPassword;
@@ -116,12 +118,13 @@ module.exports.resetPassword = async function (req, res, next) {
 				401
 			);
 		
-		user.resetToken = generateRandomString(process.env.RESET_TOKEN_LENGTH || 40);
+		const resetToken = generateRandomString(process.env.RESET_TOKEN_LENGTH || 40);
+		user.resetToken = hashToken(resetToken);
 		user.resetTokenExpiry = Date.now() + ((Number(process.env.RESET_TOKEN_EXPIRY) || 6) * 60 * 60 * 1000);
 		await user.save();
 
 		// Send email to user below this line; route is /reset-password/:resetToken
-		const [emailHtml, emailText] = generatePasswordResetEmail(user);
+		const [emailHtml, emailText] = generatePasswordResetEmail(user, resetToken);
 		await sendEmail(user.email, "Password Reset.", emailHtml, emailText);
 		res.json({ ok: true });
 	}catch(err){
@@ -134,7 +137,7 @@ module.exports.getChangePasswordAfterResetPage = async function(req, res, next){
 		const resetToken = decodeURIComponent(req.params.resetToken);
 		if(!resetToken) return res.redirect("/");
 
-		const user = await User.findOne({ resetToken });
+		const user = await User.findOne({ resetToken: hashToken(resetToken) });
 		if(!user)
 			throw new KnownError("Your reset token is invalid", 400);
 		if(Date.now() > user.resetTokenExpiry)
@@ -161,7 +164,11 @@ module.exports.changePasswordAfterReset = async function(req, res, next){
 		
 		const user = await User.findOne({ email: req.session.email });
 		user.password = await bcrypt.hash(req.body.password, 10);
+		// Clear the token and the session flag so neither can be used again
+		user.resetToken = undefined;
+		user.resetTokenExpiry = 0;
 		await user.save();
+		delete req.session.email;
 		res.json({ ok: true });
 	}catch(err){
 		next(err);
