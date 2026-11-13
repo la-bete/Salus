@@ -1,4 +1,9 @@
 require("dotenv").config();
+
+// SITE_URL builds the OAuth callback URLs and the links in emails
+if(!process.env.SITE_URL){
+	throw new Error("SITE_URL is not set. Set it to the app's public base URL, e.g. http://localhost:3000 (see server/.env.example).");
+}
 const express = require("express");
 const { resolve } = require("path");
 const mongoose = require("mongoose");
